@@ -144,6 +144,7 @@ void calMint(){
     }
 }
 bool generate(){
+    unordered_set<string> bMint;
     while(!mint.empty()){
         string s=*mint.begin();
         mint.erase(mint.begin());
@@ -155,9 +156,10 @@ bool generate(){
                 t[i]='1';
             else
                 t[i]='0';
-            if(mint.find(t)!=mint.end()){
+            if(mint.find(t)!=mint.end()||bMint.find(t)!=bMint.end()){
                 fl=true;
                 mint.erase(t);
+                bMint.insert(t);
                 t[i]='-';
                 nextMint.insert(t);
             }
