@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <stack>
 #include <unordered_map>
 #include <unordered_set>
@@ -22,7 +23,7 @@ vector<string> genOverMint;
 
 vector<string> finalMint;
 vector<int> m;
-
+vector<bool> X;
 
 
 
@@ -53,12 +54,12 @@ void toInfix(string input){
             le++;
         }
         else{
-            cout<<"Unknown symbol:"<<input[le]<<endl;
+            cerr<<"Unknown symbol:"<<input[le]<<endl;
             exit(1);
         }
     }
     if(indexCnt>20){
-        cout<<"there is too much variable"<<endl;
+        cerr<<"there is too much variable"<<endl;
         exit(1);
     }
 }
@@ -100,7 +101,38 @@ string binaryString(int x){
     }
     return ans;
 }
+void inputMint(string filename){
+    ifstream file;
+    file.open(filename, ios::in);
+    file>>indexCnt;
+    X.resize(indexCnt);
+    for(int i=0;i<X.size();++i)X[i]=false;
+    for(int i=indexCnt-1;i>=0;--i){
+        string symbol;
+        file>>symbol;
+        symbol2index[symbol]=i;
+        index2symbol[i]=symbol;
+    }
+    file.ignore();
+    string line;
+    for(int i=0;getline(file,line)&&i<(1<<indexCnt);++i){
+        if(line.back()=='1'){
+            mint.insert(binaryString(i));
+        }
+        else if(line.back()=='x'||line.back()=='X'){
+            mint.insert(binaryString(i));
+            X[i]=true;
+        }
+        else if(line.back()!='0'){
+            cerr<<"truth value should be 1 , 0 or X"<<endl;
+            exit(1);
+        }
+    }
+    file.close();
+}
 void calMint(){
+    X.resize(indexCnt);
+    for(int i=0;i<indexCnt;++i)X[i]=false;
     for(int i=0;i<(1<<(indexCnt));++i){
         stack<bool> num;
         for(char c:suffix){
@@ -131,12 +163,12 @@ void calMint(){
                 num.push(x|y);
             }
             else {
-                cout<<"internal error1"<<endl;
+                cerr<<"internal error1"<<endl;
                 exit(1);
             }
         }
         if(num.size()!=1){
-            cout<<"internal error2"<<endl;
+            cerr<<"internal error2"<<endl;
             exit(1);
         }
         if(num.top()==true)
@@ -144,10 +176,7 @@ void calMint(){
     }
 }
 bool generate(){
-    unordered_set<string> bMint;
-    while(!mint.empty()){
-        string s=*mint.begin();
-        mint.erase(mint.begin());
+    for(string s:mint){
         bool fl=false;
         for(int i=0;i<s.size();++i){
             if(s[i]=='-')continue;
@@ -156,10 +185,8 @@ bool generate(){
                 t[i]='1';
             else
                 t[i]='0';
-            if(mint.find(t)!=mint.end()||bMint.find(t)!=bMint.end()){
+            if(mint.find(t)!=mint.end()){
                 fl=true;
-                mint.erase(t);
-                bMint.insert(t);
                 t[i]='-';
                 nextMint.insert(t);
             }
@@ -191,7 +218,7 @@ void PIChart(){
         m.clear();
         dfs(s,0,0);
         for(int i:m){
-            if(chart[i]==false){
+            if(chart[i]==false&&X[i]==false){
                 chart[i]=true;
                 fl= true;
             }
@@ -221,17 +248,54 @@ void printFM(){
     }
     cout<<endl;
 }
-int main() {
-    string input;
-    cin>>input;
-    toInfix(input);
-    toSuffix();
-    calMint();
-    for(string c:mint)cout<<c<<" ";
-    cout<<endl;
-    while(generate());
-    PIChart();
-    printFM();
+
+void help(){
+    cout<<string(
+    "more information:https://github.com/Rift2020/quine-mccluskey-cpp\n\n"
+    "- print true assignment for given boolean expression\n"
+    "qm true [boolean expression]\n\n"
+    "- find the simplest expression which is equal to given boolean expression\n"
+    "qm simp [boolean expression]\n\n"
+    "- find the simplest expression which is equal to given truth table(.csv file)\n"
+    "qm table [file path]\n"
+    );
+}
+int main(int argc, char **argv) {
+    if(argc <= 1 || argc > 3){
+        help();
+        return 1;
+    }
+    string op=*(argv + 1);
+    if(argc == 2){
+
+        help();
+        if(op == "help")
+            return 0;
+        return 1;
+    }
+    if(op=="true"){
+        string input=*(argv + 2);
+        toInfix(input);
+        toSuffix();
+        calMint();
+        for(string c:mint)cout<<c<<" ";
+        cout<<endl;
+    }
+    else if(op=="simp"){
+        string input=*(argv + 2);
+        toInfix(input);
+        toSuffix();
+        calMint();
+        while(generate());
+        PIChart();
+        printFM();
+    }
+    else if(op=="table"){
+        inputMint(*(argv+2));
+        while(generate());
+        PIChart();
+        printFM();
+    }
     return 0;
 }
 
