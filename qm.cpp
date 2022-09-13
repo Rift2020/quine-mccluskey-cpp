@@ -131,8 +131,8 @@ void inputMint(string filename){
     file.close();
 }
 void calMint(){
-    X.resize(indexCnt);
-    for(int i=0;i<indexCnt;++i)X[i]=false;
+    X.resize((1<<indexCnt));
+    for(int i=0;i<(1<<indexCnt);++i)X[i]=false;
     for(int i=0;i<(1<<(indexCnt));++i){
         stack<bool> num;
         for(char c:suffix){
