@@ -1,3 +1,8 @@
+/*
+ abort qm algorithm,see:https://en.wikipedia.org/wiki/Quine%E2%80%93McCluskey_algorithm
+ time complexity is Exponential function
+ */
+
 #include <iostream>
 #include <fstream>
 #include <stack>
@@ -19,16 +24,13 @@ vector<char> infix;
 vector<char> suffix;
 
 unordered_set<string> mint,nextMint;
-vector<string> genOverMint;
+vector<string> genOverImplicant;
 
-vector<string> finalMint;
-vector<int> m;
-vector<bool> X;
+vector<string> finalImplicant;
+vector<int> m;//for dfs
+vector<bool> X;//boolean value which you don't care whether it's 0 or 1
 
-
-
-
-
+//change input string to (split) infix
 void toInfix(string input){
     for(int le=0; le < input.size();){
         int ri;
@@ -63,6 +65,8 @@ void toInfix(string input){
         exit(1);
     }
 }
+
+//change infix to suffix
 void toSuffix(){
     stack<char> ope;
     for(char c:infix){
@@ -90,6 +94,9 @@ void toSuffix(){
         ope.pop();
     }
 }
+
+//change integer to binaryString whose length is equal to indexCnt
+//example:x=5,indexCnt=4,it return "0101"
 string binaryString(int x){
     string ans(indexCnt,'0');
     int index=0;
@@ -101,6 +108,8 @@ string binaryString(int x){
     }
     return ans;
 }
+
+//read csv file -> Mint
 void inputMint(string filename){
     ifstream file;
     file.open(filename, ios::in);
@@ -130,6 +139,7 @@ void inputMint(string filename){
     }
     file.close();
 }
+//calculate all minterms by suffix
 void calMint(){
     X.resize((1<<indexCnt));
     for(int i=0;i<(1<<indexCnt);++i)X[i]=false;
@@ -175,6 +185,7 @@ void calMint(){
             mint.insert(binaryString(i));
     }
 }
+//merge Size x Implicants to Size 2x Implicants
 bool generate(){
     for(string s:mint){
         bool fl=false;
@@ -192,7 +203,7 @@ bool generate(){
             }
         }
         if(fl==false)
-            genOverMint.push_back(s);
+            genOverImplicant.push_back(s);
     }
     mint=nextMint;
     nextMint.clear();
@@ -200,6 +211,7 @@ bool generate(){
         return false;
     return true;
 }
+//Implicant s -> minterms (save in m)
 void dfs(const string &s,int index,int num){
     if(index==indexCnt){
         m.push_back(num);
@@ -210,10 +222,11 @@ void dfs(const string &s,int index,int num){
     if(s[index]=='-'||s[index]=='0')
         dfs(s,index+1,num);
 }
+//prime implicant chart step
 void PIChart(){
     bool chart[(1<<indexCnt)];
     memset(chart,0,sizeof(chart));
-    for(string s:genOverMint){
+    for(string s:genOverImplicant){
         bool fl= false;
         m.clear();
         dfs(s,0,0);
@@ -224,17 +237,18 @@ void PIChart(){
             }
         }
         if(fl)
-            finalMint.push_back(s);
+            finalImplicant.push_back(s);
     }
 }
+//print boolean expression by finalImplicant
 void printFM(){
     bool fl=true;
-    for(int i=0;i<finalMint.size();++i){
+    for(int i=0; i < finalImplicant.size(); ++i){
         if(fl==false){
             cout<<"|";
         }
         fl=false;
-        string s=finalMint[i];
+        string s=finalImplicant[i];
         bool fl2=true;
         for(int j=0; j < s.size(); ++j){
             if(s[j]=='-')continue;
@@ -248,7 +262,6 @@ void printFM(){
     }
     cout<<endl;
 }
-
 void help(){
     cout<<string(
     "more information:https://github.com/Rift2020/quine-mccluskey-cpp\n\n"
