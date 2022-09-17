@@ -6,6 +6,7 @@
 #include <iostream>
 #include <fstream>
 #include <stack>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -122,8 +123,8 @@ void inputMint(string filename){
         symbol2index[symbol]=i;
         index2symbol[i]=symbol;
     }
-    file.ignore();
-    string line;
+	string line;
+	getline(file,line);
     for(int i=0;getline(file,line)&&i<(1<<indexCnt);++i){
         if(line.back()=='1'){
             mint.insert(binaryString(i));
