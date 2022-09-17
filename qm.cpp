@@ -266,15 +266,19 @@ void help(){
     cout<<string(
     "more information:https://github.com/Rift2020/quine-mccluskey-cpp\n\n"
     "- print true assignment for given boolean expression\n"
-    "qm true [boolean expression]\n\n"
+    "qm true <boolean expression>\n\n"
     "- find the simplest expression which is equal to given boolean expression\n"
-    "qm simp [boolean expression]\n\n"
+    "qm simp <boolean expression>\n\n"
     "- find the simplest expression which is equal to given truth table(.csv file)\n"
-    "qm table [file path]\n"
-    );
+    "qm table <file path>\n\n"
+    "- generate a csv file for (qm table),you need write truth value for 2nd~last linei\n"
+	"qm csv <variable nums> [file path]\n"
+	"default file path: qm-table-sample.csv\n"
+	"caution!!!: qm csv will cover this file\n"	
+	);
 }
 int main(int argc, char **argv) {
-    if(argc <= 1 || argc > 3){
+    if(argc <= 1 || argc > 4){
         help();
         return 1;
     }
@@ -309,6 +313,31 @@ int main(int argc, char **argv) {
         PIChart();
         printFM();
     }
+	else if(op=="csv"){
+		indexCnt=atoi(*(argv+2));
+		if(indexCnt<=0){
+			cerr<<"indexCnt should be positive"<<endl;
+			exit(1);
+		}
+		if(indexCnt>20){
+			cerr<<"indexCnt too big"<<endl;
+			exit(1);
+		}
+		string filename="qm-table-sample.csv";
+		if(argc==4)
+			filename=(*(argv+3));
+		ofstream outfile;
+		outfile.open(filename, ios::out | ios::trunc );
+		outfile<<indexCnt<<" ";
+		for(int i=0;i<indexCnt;++i){
+			outfile<<(char)('a'+i)<<" ";
+		}
+		outfile<<endl;
+		for(int i=0;i<(1<<indexCnt);++i){
+			outfile<<binaryString(i)<<","<<endl;
+		}
+		outfile.close();
+	}
     return 0;
 }
 

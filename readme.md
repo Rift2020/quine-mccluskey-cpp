@@ -18,23 +18,29 @@ show help information
 
 print true assignment for given boolean expression
 
-`./qm true [boolean expression]`
+`./qm true <boolean expression>`
 
 e.g. `./qm true "a|b&c"`
 
 find the simplest expression which is equal to given boolean expression
 
-`./qm simp [boolean expression]`
+`./qm simp <boolean expression>`
 
 e.g. `./qm simp "(a[0]|b)&c_c"`
 
 find the simplest expression which is equal to given truth table(.csv file)
 
-`./qm table [file path]`
+`./qm table <file path>`
 
+generate a csv file for (qm table),you need write truth value for 2nd~last line
 
+`./qm csv <variable nums> [file path]`
 
-csv file format:
+default file path: qm-table-sample.csv
+
+**Caution! qm csv will cover this file**
+
+qm table csv file format:
 
 ```
 [variable nums] [variable name1] [variable name2] ...
