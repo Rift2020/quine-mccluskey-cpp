@@ -334,7 +334,9 @@ int main(int argc, char **argv) {
 		}
 		outfile<<endl;
 		for(int i=0;i<(1<<indexCnt);++i){
-			outfile<<binaryString(i)<<","<<endl;
+			string s=binaryString(i);
+			reverse(s.begin(),s.end());
+			outfile<<s<<","<<endl;
 		}
 		outfile.close();
 	}
