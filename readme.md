@@ -24,13 +24,21 @@ e.g. `./qm true "a|b&c"`
 
 find the simplest expression which is equal to given boolean expression
 
-`./qm simp <boolean expression>`
+`./qm simp [format] <boolean expression>`
 
-e.g. `./qm simp "(a[0]|b)&c_c"`
+default format: -SOP
+
+format: { -SOP | -POS }
+
+e.g. `./qm simp "(a[0]|b)&c_c"` `qm simp -POS "a&~b|a&~d|b&~d|~b&d|~c"`
 
 find the simplest expression which is equal to given truth table(.csv file)
 
-`./qm table <file path>`
+`./qm table [format] <file path>`
+
+default format: -SOP
+
+format: { -SOP | -POS }
 
 generate a csv file for (qm table),you need write truth value for 2nd~last line
 

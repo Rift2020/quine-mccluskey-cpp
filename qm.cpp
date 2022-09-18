@@ -27,7 +27,7 @@ vector<char> suffix;
 unordered_set<string> mint,nextMint;
 vector<string> genOverImplicant;
 
-vector<string> finalImplicant;
+unordered_set<string> finalImplicant;
 vector<int> m;//for dfs
 vector<bool> X;//boolean value which you don't care whether it's 0 or 1
 
@@ -97,7 +97,7 @@ void toSuffix(){
 }
 
 //change integer to binaryString whose length is equal to indexCnt
-//example:x=5,indexCnt=4,it return "0101"
+//example:x=5,indexCnt=4,it return "1010"
 string binaryString(int x){
     string ans(indexCnt,'0');
     int index=0;
@@ -111,12 +111,12 @@ string binaryString(int x){
 }
 
 //read csv file -> Mint
-void inputMint(string filename){
+void inputMint(string filename,bool rev){
     ifstream file;
     file.open(filename, ios::in);
     file>>indexCnt;
-    X.resize(indexCnt);
-    for(int i=0;i<X.size();++i)X[i]=false;
+    X.resize((1<<indexCnt));
+    for(int i=0;i<(1<<indexCnt);++i)X[i]=false;
     for(int i=indexCnt-1;i>=0;--i){
         string symbol;
         file>>symbol;
@@ -126,14 +126,21 @@ void inputMint(string filename){
 	string line;
 	getline(file,line);
     for(int i=0;getline(file,line)&&i<(1<<indexCnt);++i){
-        if(line.back()=='1'){
+        char back=line.back();
+        if(rev == true){
+            if(back=='1')
+                back='0';
+            else if(back=='0')
+                back='1';
+        }
+        if(back=='1'){
             mint.insert(binaryString(i));
         }
-        else if(line.back()=='x'||line.back()=='X'){
+        else if(back=='x'||back=='X'){
             mint.insert(binaryString(i));
             X[i]=true;
         }
-        else if(line.back()!='0'){
+        else if(back!='0'){
             cerr<<"truth value should be 1 , 0 or X"<<endl;
             exit(1);
         }
@@ -226,8 +233,33 @@ void dfs(const string &s,int index,int num){
 //prime implicant chart step
 void PIChart(){
     bool chart[(1<<indexCnt)];
+    int cnt[(1<<indexCnt)];
+    int which[(1<<indexCnt)];
+    memset(cnt,0,sizeof(cnt));
     memset(chart,0,sizeof(chart));
+    for(int i=0;i<genOverImplicant.size();++i){
+        bool fl= false;
+        m.clear();
+        dfs(genOverImplicant[i],0,0);
+        for(int j:m){
+            if(X[i]==false){
+                cnt[j]++;
+                which[j]=i;
+            }
+        }
+    }
+    for(int i=0;i<(1<<indexCnt);++i){
+        if(cnt[i]==1){
+            finalImplicant.insert(genOverImplicant[which[i]]);
+            m.clear();
+            dfs(genOverImplicant[which[i]],0,0);
+            for(int j:m){
+                chart[j]=true;
+            }
+        }
+    }
     for(string s:genOverImplicant){
+        if(finalImplicant.find(s)!=finalImplicant.end())continue;
         bool fl= false;
         m.clear();
         dfs(s,0,0);
@@ -237,21 +269,22 @@ void PIChart(){
                 fl= true;
             }
         }
-        if(fl)
-            finalImplicant.push_back(s);
+        if(fl){
+            finalImplicant.insert(s);
+        }
+
     }
 }
-//print boolean expression by finalImplicant
-void printFM(){
+//print SOP boolean expression by finalImplicant
+void printSOP(){
     bool fl=true;
-    for(int i=0; i < finalImplicant.size(); ++i){
+    for(string s:finalImplicant){
         if(fl==false){
             cout<<"|";
         }
         fl=false;
-        string s=finalImplicant[i];
         bool fl2=true;
-        for(int j=0; j < s.size(); ++j){
+        for(int j=s.size()-1; j >= 0; --j){
             if(s[j]=='-')continue;
             if(fl2== false)
                 cout<<"&";
@@ -263,19 +296,48 @@ void printFM(){
     }
     cout<<endl;
 }
+//print POS boolean expression by finalImplicant
+void printPOS(){
+    bool fl=true;
+    for(string s:finalImplicant){
+        if(fl==false){
+            cout<<"&";
+        }
+        fl=false;
+        string output;
+        bool fl2=true;
+        for(int j=s.size()-1; j >=0; --j){
+            if(s[j]=='-')continue;
+            if(fl2== false)
+                output+="|";
+            fl2=false;
+            if(s[j]=='1')
+                output+="~";
+            output+=index2symbol[j];
+        }
+        if(output.size()>1)
+            output="("+output+")";
+        cout<<output;
+    }
+    cout<<endl;
+}
 void help(){
     cout<<string(
     "more information:https://github.com/Rift2020/quine-mccluskey-cpp\n\n"
     "- print true assignment for given boolean expression\n"
     "qm true <boolean expression>\n\n"
     "- find the simplest expression which is equal to given boolean expression\n"
-    "qm simp <boolean expression>\n\n"
+    "qm simp [format] <boolean expression>\n\n"
+    "default format: -SOP\n"
+    "format: { -SOP | -POS }\n\n"
     "- find the simplest expression which is equal to given truth table(.csv file)\n"
-    "qm table <file path>\n\n"
+    "qm table [format] <file path>\n\n"
+    "default format: -SOP\n"
+    "format: { -SOP | -POS }\n\n"
     "- generate a csv file for (qm table),you need write truth value for 2nd~last linei\n"
 	"qm csv <variable nums> [file path]\n"
 	"default file path: qm-table-sample.csv\n"
-	"caution!!!: qm csv will cover this file\n"	
+	"caution!!!: qm csv will cover this file\n"
 	);
 }
 int main(int argc, char **argv) {
@@ -284,8 +346,12 @@ int main(int argc, char **argv) {
         return 1;
     }
     string op=*(argv + 1);
+	string op2,op3;
+	if(argc>=3)
+		op2=*(argv+2);
+    if(argc>=4)
+        op3=*(argv+3);
     if(argc == 2){
-
         help();
         if(op == "help")
             return 0;
@@ -296,23 +362,61 @@ int main(int argc, char **argv) {
         toInfix(input);
         toSuffix();
         calMint();
-        for(string c:mint)cout<<c<<" ";
+        for(int i=0;i<indexCnt;++i)
+            cout<<index2symbol[i]<<" ";
+        cout<<endl;
+        for(string c:mint)
+            cout<<c<<" ";
         cout<<endl;
     }
     else if(op=="simp"){
-        string input=*(argv + 2);
-        toInfix(input);
-        toSuffix();
-        calMint();
-        while(generate());
-        PIChart();
-        printFM();
+		string input;
+		if(argc==3)
+			input=op2;
+		else
+			input=op3;
+		if(argc==3||op2=="-sop"||op2=="-SOP"){
+			toInfix(input);
+			toSuffix();
+			calMint();
+			while(generate());
+			PIChart();
+            printSOP();
+		}
+		else if(op2=="-pos"||op2=="-POS"){
+			input="~("+input+")";
+            toInfix(input);
+            toSuffix();
+            calMint();
+            while(generate());
+            PIChart();
+            printPOS();
+		}
+        else{
+            cerr<<"unknown options "<<op2<<endl;
+        }
     }
     else if(op=="table"){
-        inputMint(*(argv+2));
-        while(generate());
-        PIChart();
-        printFM();
+        string input;
+        if(argc==3)
+            input=op2;
+        else
+            input=op3;
+        if(argc==3||op2=="-sop"||op2=="-SOP"){
+            inputMint(input, false);
+            while(generate());
+            PIChart();
+            printSOP();
+        }
+        else if(op2=="-pos"||op2=="-POS"){
+            inputMint(input, true);
+            while(generate());
+            PIChart();
+            printPOS();
+        }
+        else{
+            cerr<<"unknown options "<<op2<<endl;
+        }
     }
 	else if(op=="csv"){
 		indexCnt=atoi(*(argv+2));
@@ -341,6 +445,8 @@ int main(int argc, char **argv) {
 		}
 		outfile.close();
 	}
+    else
+        cerr<<"unknown op "<<op<<endl;
     return 0;
 }
 
